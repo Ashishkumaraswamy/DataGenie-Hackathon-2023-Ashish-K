@@ -75,6 +75,10 @@ docs/_build/
 .pybuilder/
 target/
 
+#CSV Files
+.csv
+.CSV
+
 # Jupyter Notebook
 .ipynb_checkpoints
 
@@ -127,6 +131,9 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+
+# Pickle files
+.pkl
 
 # Spyder project settings
 .spyderproject
