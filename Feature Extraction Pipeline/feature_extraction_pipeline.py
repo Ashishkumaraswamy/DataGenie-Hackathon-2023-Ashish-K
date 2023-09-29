@@ -70,6 +70,12 @@ class FeatureExtractionTransformer(BaseEstimator, TransformerMixin):
         # Calculate Power Spectral Density (PSD) using Welch's method
         frequencies_welch, psd = welch(X['Value'], nperseg=len(X['Value']))
 
+        denominator = np.sum(psd[(frequencies_welch >= 4) & (frequencies_welch <= 8)])
+        if denominator != 0:
+            frequency_delta_theta_ratio = np.sum(psd[(frequencies_welch >= 1) & (frequencies_welch <= 4)]) / denominator
+        else:
+            frequency_delta_theta_ratio = 0  # or any default value you want to assign
+
         first_differences = np.diff(X['Value'])
 
         # Calculate Lag-based Feature (e.g., with lag=1)
@@ -134,7 +140,7 @@ class FeatureExtractionTransformer(BaseEstimator, TransformerMixin):
             "Frequency 75th Percentile" : np.percentile(frequencies, 75),
             "Fequency Entropy Value" : entropy(frequencies),
             "Fequency Peak Value" : frequencies[np.argmax(np.abs(fft_values))],
-            "Frequency Delta Theta Ratio" : np.sum(psd[(frequencies_welch >= 1) & (frequencies_welch <= 4)]) / np.sum(psd[(frequencies_welch >= 4) & (frequencies_welch <= 8)]),
+            "Frequency Delta Theta Ratio" : frequency_delta_theta_ratio,
             "Lag 1 Feature Correlation" : lag_feature,
             "First Order Difference Mean" : np.mean(first_differences),
             "First Order Difference Median" : np.median(first_differences),
@@ -160,6 +166,16 @@ class FeatureExtractionTransformer(BaseEstimator, TransformerMixin):
             "cD Coeffecients 75th percentile" : np.percentile(cD, 75),
         }
 
-        # Return the results as a pandas series
-        return pd.Series(result_dict)
+        # Return the results as a Pandas Series
+        result  = pd.Series(result_dict)
+        result = result.replace([np.inf, -np.inf], [np.finfo(np.float64).max, np.finfo(np.float64).min]).fillna(0)
+
+        return result
+
+#Create a pipeline
+feature_extraction_pipeline = Pipeline([
+    ('calculate_stats', FeatureExtractionTransformer())
+])
+
+joblib.dump(feature_extraction_pipeline,'feature_extractor_pipeline.pkl')
 
