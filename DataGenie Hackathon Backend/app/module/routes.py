@@ -1,24 +1,19 @@
-from fastapi import FastAPI
 from pydantic import BaseModel
 import joblib
-from feature_extraction_pipeline import FeatureExtractionTransformer
-from typing import List
+from .feature_extraction_pipeline import *
+from fastapi import APIRouter
 import pandas as pd
+from app import app
+from .schema import *
 
-app = FastAPI()
-
-# Load the trained pipeline
-pipeline = joblib.load('feature_extractor_pipeline.pkl')
-
-class TimeSeriesRow(BaseModel):
-    Date: str
-    Value: float
-
-class TimeSeriesData(BaseModel):
-    data: List[TimeSeriesRow]
+@app.get("/")
+def home():
+    return "Hello World"
 
 @app.post("/data/transform/")
 def feature_extraction(data: TimeSeriesData):
+    print("reached here")
+    pipeline = joblib.load('feature_extractor_pipeline.pkl')
     try:
         # Convert the list of dictionaries to a DataFrame
         time_series_data = data.data
@@ -33,3 +28,4 @@ def feature_extraction(data: TimeSeriesData):
         return result
     except Exception as e:
         return {"error": str(e)}
+
