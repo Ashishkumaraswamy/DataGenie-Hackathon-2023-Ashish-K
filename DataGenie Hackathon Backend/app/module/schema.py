@@ -7,3 +7,10 @@ class TimeSeriesRow(BaseModel):
 
 class TimeSeriesData(BaseModel):
     data: List[TimeSeriesRow]
+
+class QueryParams(BaseModel):
+    date_from: str
+    date_to: str
+    period: int
+    frequency: str
+    

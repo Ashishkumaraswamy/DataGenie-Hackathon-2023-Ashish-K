@@ -11,6 +11,7 @@ import nolds
 import pywt
 from statsmodels.tsa.holtwinters import ExponentialSmoothing
 import joblib
+from sklearn.preprocessing import StandardScaler
 
 
 # Custom transformer to extract features
@@ -28,6 +29,8 @@ class FeatureExtractionTransformer(BaseEstimator, TransformerMixin):
         return correlation_coefficient
 
     def transform(self, X):
+        scaler = StandardScaler()  
+        X['Value'] = scaler.fit_transform(X['Value'].values.reshape(-1,1))
         mean = np.mean(X['Value'])
         median = np.median(X['Value'])
         # Mode can have multiple values, so take the first one
