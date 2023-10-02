@@ -1,13 +1,12 @@
 <div align="center">
-<h1> Backend for AQI-Heatwave-Forecaster
+<h1> DATAGENIE HACKATHON BACKEND
 </h1>
 
 <p>
-Basic Flask application to make model prediction of AQI and Heatwaves for the Tier-2 cites in Telangana with various endpoints as mentioned below.
+Basic FASTAPI application to make model prediction of custom time series data
 </p>
 
 ![Python](https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54) 
-![Flask](https://img.shields.io/static/v1?style=for-the-badge&message=Flask&color=000000&logo=Flask&logoColor=FFFFFF&label=)
 ![Amazon AWS](https://img.shields.io/static/v1?style=for-the-badge&message=Amazon+AWS&color=232F3E&logo=Amazon+AWS&logoColor=FFFFFF&label=)
 
 <hr>
@@ -30,9 +29,7 @@ Basic Flask application to make model prediction of AQI and Heatwaves for the Ti
 3. Run the Application
 
 ```
-set FLASK_APP=index.py
-set FLASK_ENV=development
-flask run
+    uvicorn run:app --host 0.0.0.0 --port 80
 ```
 
 
