@@ -70,8 +70,6 @@ async def process_data(data: TimeSeriesData, date_from: str,date_to: str="",peri
         forecast_json, mape_value = generate_sarimax_forecast(ts_data, date_from, date_to, frequency, period)
     elif model == "STL":
         forecast_json, mape_value = generate_stl_forecast(ts_data, date_from, date_to, frequency, period)
-    elif model == "TBATS":
-        forecast_json, mape_value = generate_tbats_forecast(ts_data, date_from, date_to, frequency, period)
 
     # Return a response
     return {"model":model,"mape": mape_value, "result": forecast_json}

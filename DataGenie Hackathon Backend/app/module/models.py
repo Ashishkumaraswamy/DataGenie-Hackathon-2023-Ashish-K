@@ -385,7 +385,7 @@ def generate_stl_forecast(data, date_from, date_to, frequency, period):
     print("Forecast Period:", forecast_period)
     
     # Make predictions for the specified period using the trend and seasonal components
-    forecast = trend.append(seasonal).iloc[:int(forecast_period)+1]
+    forecast = pd.concat([trend, seasonal]).iloc[:int(forecast_period)+1]
     print("Forecast\n", forecast)
     
     # Calculate MAPE
