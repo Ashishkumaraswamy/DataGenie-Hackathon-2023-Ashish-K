@@ -11,8 +11,12 @@ import nolds
 import pywt
 from statsmodels.tsa.holtwinters import ExponentialSmoothing
 import joblib
+from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
-
+from sklearn.linear_model import LinearRegression
+from sklearn.preprocessing import PolynomialFeatures
+from statsmodels.tsa.stattools import adfuller, acf, pacf
+from scipy.stats import normaltest
 
 # Custom transformer to extract features
 class FeatureExtractionTransformer(BaseEstimator, TransformerMixin):
@@ -39,6 +43,32 @@ class FeatureExtractionTransformer(BaseEstimator, TransformerMixin):
         std_dev = np.std(X['Value'])
         skewness = skew(X['Value'])
         kurt = kurtosis(X['Value'])
+        acf_values = sm.tsa.acf(X['Value'], nlags=5)
+        pacf_values = sm.tsa.pacf(X['Value'], nlags=5)
+        num_acf_peaks = len([1 for val in acf_values[1:] if abs(val) > 0.025])
+        dominant_frequency_acf = acf_values[1:].argmax() + 1
+        strength_of_seasonality_acf = acf_values[dominant_frequency_acf]
+        has_multiple_seasonal_patterns = len([1 for val in acf_values[1:] if abs(val) > 0.025]) > 1
+        x = np.arange(len(X['Value'])).reshape(-1, 1)  # Reshape to 2D array
+        linear_reg = LinearRegression().fit(x, X['Value'])
+        # Slope (Coefficient)
+        slope = linear_reg.coef_[0]
+
+        degree = 2
+        polyreg = make_pipeline(PolynomialFeatures(degree), LinearRegression())
+        polyreg.fit(x, X['Value'])
+        # Coefficients of the polynomial (including higher-order terms)
+        poly_coefficients = polyreg.named_steps['linearregression'].coef_
+        # print(poly_coefficients)
+        # algo = rpt.Pelt(model="rbf").fit(X['Value'])
+        # result = algo.predict(pen=10)
+        # print("result",result)
+
+        # num_acf_peaks = len([1 for val in acf_values[1:] if abs(val) > 0.025])
+        # dominant_frequency_acf_index = acf_values[1:].argmax() + 1
+        # dominant_frequency_acf = acf_values[dominant_frequency_acf_index]
+        # strength_of_seasonality_acf = dominant_frequency_acf
+        # has_multiple_seasonal_patterns = num_acf_peaks > 1
 
         # Calculate percentiles (e.g., 25th, 75th percentiles)
         percentiles = np.percentile(X['Value'], [25, 75])
@@ -53,7 +83,7 @@ class FeatureExtractionTransformer(BaseEstimator, TransformerMixin):
         rolling_std_dev = X['Value'].rolling(window=rolling_window).std()
 
         # Extract seasonal, trend, and residual components for each month
-        result = sm.tsa.seasonal_decompose(X['Value'], model='additive', period=12)  # Assuming a yearly seasonal period
+        result = sm.tsa.seasonal_decompose(X['Value'], model='additive', period=6)  # Assuming a yearly seasonal period
 
         # Extract Seasonal Components
         trend_component = result.trend
@@ -95,6 +125,14 @@ class FeatureExtractionTransformer(BaseEstimator, TransformerMixin):
         # Extract coefficients from DWT
         cA, cD = coeffs  # cA: Approximation coefficients, cD: Detail coefficients
 
+        adf = adfuller(X['Value'])
+
+        lag_acf = acf(X['Value'], nlags=5)
+        lag_pacf = pacf(X['Value'], nlags=5, method='ols')
+
+        residuals = X['Value'].diff().dropna()  # Assuming first-order differencing
+        
+
         result_dict = {
             'Mean': mean,
             'Median': median,
@@ -103,6 +141,13 @@ class FeatureExtractionTransformer(BaseEstimator, TransformerMixin):
             'Std Dev': std_dev,
             'Skewness': skewness,
             'Kurtosis': kurt,
+            # 'ACF_values' : acf_values,
+            # 'PACF_values' : pacf_values,
+            # 'Num ACF Peaks': num_acf_peaks,
+            # 'Dominant Frequency ACF': dominant_frequency_acf,
+            # 'Strength of seasonality ACF':strength_of_seasonality_acf,
+            # 'Multiple Seasonal Patterns':has_multiple_seasonal_patterns,
+            'Linear Regression Slope': slope,
             '25th Percentile': percentiles[0],
             '75th Percentile': percentiles[1],
             'Auto_Corr_Lag1': autocorr_lag1,
@@ -169,8 +214,30 @@ class FeatureExtractionTransformer(BaseEstimator, TransformerMixin):
             "cD Coeffecients 75th percentile" : np.percentile(cD, 75),
         }
 
+        result_dict['acf_values'] = [float(i) for i in acf_values]
+        result_dict['pacf_values'] = [float(i) for i in pacf_values]
+        result_dict['num_acf_peaks'] = int(num_acf_peaks)
+        result_dict['dominant_frequency'] = float(dominant_frequency_acf)
+        result_dict['strength_of_seasonality_acf'] = float(strength_of_seasonality_acf)
+        result_dict['has_multiple_seasonal_patterns'] = has_multiple_seasonal_patterns
+        result_dict['poly_coefficients'] = [float(i) for i in poly_coefficients]
+        _, result_dict['residuals_normality_pvalue'] = normaltest(residuals)
+        result_dict['residuals_normality_pvalue'] = float(result_dict['residuals_normality_pvalue'])
+        result_dict['stationary'] = bool(adf[1] <= 0.05)  # Check if p-value is less than 0.05
+        result_dict['significant_acf_peaks'] = int(sum(np.abs(lag_acf) > 0.25))
+        result_dict['significant_pacf_peaks'] = int(sum(np.abs(lag_pacf) > 0.25))
+        result_dict['lag1_correlation'] = float(X['Value'].corr(X['Value'].shift(1)))
+        result_features = {}
+        for key, value in result_dict.items():
+            if isinstance(value, list):
+                for idx, item in enumerate(value):
+                    new_key = f'{key}_{idx}'
+                    result_features[new_key] = float(item)
+            else:
+                result_features[key] = value
+
         # Return the results as a Pandas Series
-        result  = pd.Series(result_dict)
+        result  = pd.Series(result_features)
         result = result.replace([np.inf, -np.inf], [np.finfo(np.float64).max, np.finfo(np.float64).min]).fillna(0)
 
         return result

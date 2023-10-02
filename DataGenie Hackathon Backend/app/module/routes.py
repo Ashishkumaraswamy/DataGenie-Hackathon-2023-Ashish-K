@@ -25,19 +25,29 @@ def feature_extraction(data: TimeSeriesData):
         df_data.set_index('Date',inplace=True)        
         # Perform the transformation using the pipeline
         result = pipeline.transform(df_data)
-        
         return result
     except Exception as e:
         return {"error": str(e)}
 
 @app.post("/predict")
 async def process_data(data: TimeSeriesData, date_from: str,date_to: str="",period: int=0,frequency: str="",model: str=""):
-    print("Into Here")
-    print("Route Date From:",date_from)
+
     time_series_data = data.data
+    if model == "":
+        mapper = {0:'ARIMA',1:"ETS",2:"GARCH",3:"LSTM",4:"PROPHET",5:"SARIMAX",6:"STL"}
+        loaded_model = joblib.load('lgbm_model.pkl')
+        feature_data = feature_extraction(data)
+        print(feature_data)
+        feature_data = np.array(feature_data)
+        feature_data = feature_data.reshape(1,96)
+        y_pred = loaded_model.predict(feature_data)
+        y_pred_max = [max(y_pred[0])]
+        # Convert predicted probabilities to class labels
+        predicted_label = list(y_pred[0]).index(max(y_pred[0]))
+        model = mapper[predicted_label]
     # Extracting date and value attributes and creating a list of tuples
     data_tuples = [(entry.Date, entry.Value) for entry in time_series_data]
-    print(data_tuples[0])
+
     ts_data = pd.Series(data=[value for _, value in data_tuples], index=[parser.parse(date).strftime("%Y-%m-%dT%H:%M:%S") for date, _ in data_tuples])       
     ts_data.index = pd.to_datetime(ts_data.index)
     
@@ -55,7 +65,6 @@ async def process_data(data: TimeSeriesData, date_from: str,date_to: str="",peri
     elif model == "SARIMAX":
         forecast_json, mape_value = generate_sarimax_forecast(ts_data, date_from, date_to, frequency, period)
     elif model == "STL":
-        print("Into STL")
         forecast_json, mape_value = generate_stl_forecast(ts_data, date_from, date_to, frequency, period)
     elif model == "TBATS":
         forecast_json, mape_value = generate_tbats_forecast(ts_data, date_from, date_to, frequency, period)
