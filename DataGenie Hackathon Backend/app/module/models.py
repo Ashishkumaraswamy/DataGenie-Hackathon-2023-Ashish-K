@@ -29,28 +29,30 @@ def generate_arima_forecast(data, date_from, date_to, frequency, period):
     print("Frequency:",frequency)
     # Fit ARIMA model to the filtered data
     order = (2, 2, 2)  # Example order, you can optimize this based on your data
-    model = ARIMA(training_data, order=order)
+    model = ARIMA(training_data.iloc[:-1], order=order)
     model_fit = model.fit()
     
     # Calculate forecast period based on frequency
     if frequency == 'H':
-        forecast_period = (date_to_ts - date_from_ts).total_seconds() / 3600 + period -1 # Difference in hours
+        forecast_period = (date_to_ts - date_from_ts).total_seconds() / 3600 + period# Difference in hours
         actual_values = data.loc[date_from_ts:date_from_ts + pd.DateOffset(hours=forecast_period)]
     elif frequency == 'D':
-        forecast_period = (date_to_ts - date_from_ts).days + period -1  # Difference in days
+        forecast_period = (date_to_ts - date_from_ts).days + period# Difference in days
         actual_values = data.loc[date_from_ts:date_from_ts + pd.DateOffset(days=forecast_period)]
     elif frequency == 'W':
-        forecast_period = ((date_to_ts - date_from_ts).days + 1) // 7 + period -1 # Difference in weeks
+        forecast_period = ((date_to_ts - date_from_ts).days + 1) // 7 + period # Difference in weeks
         actual_values = data.loc[date_from_ts:date_from_ts + pd.DateOffset(weeks=forecast_period)]
     elif frequency == 'M':
         forecast_period = (date_to_ts.year - date_from_ts.year) * 12 + date_to_ts.month - date_from_ts.month + period # Difference in months
         actual_values = data.loc[date_from_ts:date_from_ts + pd.DateOffset(months=forecast_period)]
     elif frequency == 'Y':
-        forecast_period = date_to_ts.year - date_from_ts.year + period -1  # Difference in years
+        forecast_period = date_to_ts.year - date_from_ts.year + period# Difference in years
         actual_values = data.loc[date_from_ts:date_from_ts + pd.DateOffset(years=forecast_period)]
+    forecast_period+=1
+    print("Actual Values:",actual_values)
     print("Forecast Period:", forecast_period)
     # Make predictions for the specified period
-    forecast = model_fit.forecast(steps=int(forecast_period)+1)
+    forecast = model_fit.forecast(steps=int(forecast_period))
     print("Forecast\n",forecast)
     # Calculate MAPE
 
@@ -73,29 +75,31 @@ def generate_ets_forecast(data, date_from, date_to, frequency, period):
     print("Frequency:", frequency)
     
     # Fit ETS model to the filtered data
-    model = ExponentialSmoothing(training_data, trend="add", seasonal="add", seasonal_periods=12)  # Example configuration, adjust as needed
+    model = ExponentialSmoothing(training_data[:-1], trend="add", seasonal="add", seasonal_periods=12)  # Example configuration, adjust as needed
     model_fit = model.fit()
     
     # Calculate forecast period based on frequency
     if frequency == 'H':
-        forecast_period = (date_to_ts - date_from_ts).total_seconds() / 3600 + period -1 # Difference in hours
+        forecast_period = (date_to_ts - date_from_ts).total_seconds() / 3600 + period# Difference in hours
         actual_values = data.loc[date_from_ts:date_from_ts + pd.DateOffset(hours=forecast_period)]
     elif frequency == 'D':
-        forecast_period = (date_to_ts - date_from_ts).days + period -1 # Difference in days
+        forecast_period = (date_to_ts - date_from_ts).days + period # Difference in days
         actual_values = data.loc[date_from_ts:date_from_ts + pd.DateOffset(days=forecast_period)]
     elif frequency == 'W':
-        forecast_period = ((date_to_ts - date_from_ts).days + 1) // 7 + period -1 # Difference in weeks
+        forecast_period = ((date_to_ts - date_from_ts).days + 1) // 7 + period # Difference in weeks
         actual_values = data.loc[date_from_ts:date_from_ts + pd.DateOffset(weeks=forecast_period)]
     elif frequency == 'M':
-        forecast_period = (date_to_ts.year - date_from_ts.year) * 12 + date_to_ts.month - date_from_ts.month + period -1 # Difference in months
+        forecast_period = (date_to_ts.year - date_from_ts.year) * 12 + date_to_ts.month - date_from_ts.month + period # Difference in months
         actual_values = data.loc[date_from_ts:date_from_ts + pd.DateOffset(months=forecast_period)]
     elif frequency == 'Y':
-        forecast_period = date_to_ts.year - date_from_ts.year + period -1 # Difference in years
+        forecast_period = date_to_ts.year - date_from_ts.year + period # Difference in years
         actual_values = data.loc[date_from_ts:date_from_ts + pd.DateOffset(years=forecast_period)]
+    forecast_period+=1
+    print("Actual Values:",actual_values)
     print("Forecast Period:", forecast_period)
     
     # Make predictions for the specified period
-    forecast = model_fit.forecast(steps=int(forecast_period)+1)
+    forecast = model_fit.forecast(steps=int(forecast_period))
     print("Forecast\n", forecast)
     
     # Calculate MAPE
@@ -117,25 +121,27 @@ def generate_garch_forecast(data, date_from, date_to, frequency, period):
     print("Frequency:", frequency)
     
     # Fit GARCH model to the filtered data
-    model = arch_model(training_data, vol='Garch', p=1, q=1)  # Example configuration, adjust p and q based on your data
+    model = arch_model(training_data[:-1], vol='Garch', p=1, q=1)  # Example configuration, adjust p and q based on your data
     model_fit = model.fit(disp='off')
     
     # Calculate forecast period based on frequency
     if frequency == 'H':
-        forecast_period = (date_to_ts - date_from_ts).total_seconds() / 3600 + period -1 # Difference in hours
+        forecast_period = (date_to_ts - date_from_ts).total_seconds() / 3600 + period# Difference in hours
         actual_values = data.loc[date_from_ts:date_from_ts + pd.DateOffset(hours=forecast_period)]
     elif frequency == 'D':
-        forecast_period = (date_to_ts - date_from_ts).days + period -1 # Difference in days
+        forecast_period = (date_to_ts - date_from_ts).days + period# Difference in days
         actual_values = data.loc[date_from_ts:date_from_ts + pd.DateOffset(days=forecast_period)]
     elif frequency == 'W':
         forecast_period = ((date_to_ts - date_from_ts).days + 1) // 7 + period -1  # Difference in weeks
         actual_values = data.loc[date_from_ts:date_from_ts + pd.DateOffset(weeks=forecast_period)]
     elif frequency == 'M':
-        forecast_period = (date_to_ts.year - date_from_ts.year) * 12 + date_to_ts.month - date_from_ts.month + period -1 # Difference in months
+        forecast_period = (date_to_ts.year - date_from_ts.year) * 12 + date_to_ts.month - date_from_ts.month + period# Difference in months
         actual_values = data.loc[date_from_ts:date_from_ts + pd.DateOffset(months=forecast_period)]
     elif frequency == 'Y':
-        forecast_period = date_to_ts.year - date_from_ts.year + period -1  # Difference in years
+        forecast_period = date_to_ts.year - date_from_ts.year + period# Difference in years
         actual_values = data.loc[date_from_ts:date_from_ts + pd.DateOffset(years=forecast_period)]
+    forecast_period+=1
+    print("Actual Values:",actual_values)
     print("Forecast Period:", forecast_period)
     
     # Make predictions for the specified period
@@ -168,7 +174,7 @@ def generate_lstm_forecast(data, date_from, date_to, frequency, period):
     
     # Normalize the data
     scaler = MinMaxScaler(feature_range=(0, 1))
-    scaled_data = scaler.fit_transform(training_data.values.reshape(-1, 1))
+    scaled_data = scaler.fit_transform(training_data[:-1].values.reshape(-1, 1))
     
     # Create sequences for LSTM model
     sequence_length = 10  # You can adjust the sequence length based on your data
@@ -197,22 +203,24 @@ def generate_lstm_forecast(data, date_from, date_to, frequency, period):
     inputs = inputs.reshape(1, -1)  # Reshape for LSTM input
 
     if frequency == 'H':
-        forecast_period = (date_to_ts - date_from_ts).total_seconds() / 3600 + period -1 # Difference in hours
+        forecast_period = (date_to_ts - date_from_ts).total_seconds() / 3600 + period# Difference in hours
         actual_values = data.loc[date_from_ts:date_from_ts + pd.DateOffset(hours=forecast_period)]
     elif frequency == 'D':
-        forecast_period = (date_to_ts - date_from_ts).days + period -1  # Difference in days
+        forecast_period = (date_to_ts - date_from_ts).days + period# Difference in days
         actual_values = data.loc[date_from_ts:date_from_ts + pd.DateOffset(days=forecast_period)]
     elif frequency == 'W':
-        forecast_period = ((date_to_ts - date_from_ts).days + 1) // 7 + period -1  # Difference in weeks
+        forecast_period = ((date_to_ts - date_from_ts).days + 1) // 7 + period# Difference in weeks
         actual_values = data.loc[date_from_ts:date_from_ts + pd.DateOffset(weeks=forecast_period)]
     elif frequency == 'M':
-        forecast_period = (date_to_ts.year - date_from_ts.year) * 12 + date_to_ts.month - date_from_ts.month + period -1 # Difference in months
+        forecast_period = (date_to_ts.year - date_from_ts.year) * 12 + date_to_ts.month - date_from_ts.month + period# Difference in months
         actual_values = data.loc[date_from_ts:date_from_ts + pd.DateOffset(months=forecast_period)]
     elif frequency == 'Y':
-        forecast_period = date_to_ts.year - date_from_ts.year + period -1  # Difference in years
+        forecast_period = date_to_ts.year - date_from_ts.year + period# Difference in years
         actual_values = data.loc[date_from_ts:date_from_ts + pd.DateOffset(years=forecast_period)]
-    print("Forecast Period:", forecast_period)
     forecast_period+=1
+    print("Actual Values:",actual_values)
+    print("Forecast Period:", forecast_period)
+   
     # Make predictions for the specified period
     forecast = []
     for _ in range(int(forecast_period)):
@@ -243,7 +251,7 @@ def generate_prophet_forecast(data, date_from, date_to, frequency, period):
     print('Date From',date_from_ts)
     print('Date To',date_to_ts)
     print("Data",data)
-    training_data = data[:date_from_ts]
+    training_data = data[:date_from_ts][:-1]
     print("Triaining Data",training_data)
     
     # Prepare the data for Prophet model
@@ -257,26 +265,27 @@ def generate_prophet_forecast(data, date_from, date_to, frequency, period):
     model.fit(df)
     
     if frequency == 'H':
-        forecast_period = (date_to_ts - date_from_ts).total_seconds() / 3600 + period + 1 # Difference in hours
+        forecast_period = (date_to_ts - date_from_ts).total_seconds() / 3600 + period# Difference in hours
         date_offset = pd.DateOffset(hours=forecast_period)
         actual_values = data.loc[date_from_ts:date_from_ts + pd.DateOffset(hours=forecast_period)]
     elif frequency == 'D':
-        forecast_period = (date_to_ts - date_from_ts).days + period + 1  # Difference in days
+        forecast_period = (date_to_ts - date_from_ts).days + period# Difference in days
         date_offset = pd.DateOffset(days=forecast_period)
         actual_values = data.loc[date_from_ts:date_from_ts + pd.DateOffset(days=forecast_period)]
     elif frequency == 'W':
-        forecast_period = ((date_to_ts - date_from_ts).days + 1) // 7 + period +1  # Difference in weeks
+        forecast_period = ((date_to_ts - date_from_ts).days + 1) // 7 + period# Difference in weeks
         date_offset = pd.DateOffset(weeks=forecast_period)
         actual_values = data.loc[date_from_ts:date_from_ts + pd.DateOffset(weeks=forecast_period)]
     elif frequency == 'M':
-        forecast_period = (date_to_ts.year - date_from_ts.year) * 12 + date_to_ts.month - date_from_ts.month + period + 1 # Difference in months
+        forecast_period = (date_to_ts.year - date_from_ts.year) * 12 + date_to_ts.month - date_from_ts.month + period# Difference in months
         date_offset = pd.DateOffset(months=forecast_period)
         actual_values = data.loc[date_from_ts:date_from_ts + pd.DateOffset(months=forecast_period)]
     elif frequency == 'Y':
-        forecast_period = date_to_ts.year - date_from_ts.year + period + 1  # Difference in years
+        forecast_period = date_to_ts.year - date_from_ts.year + period# Difference in years
         date_offset = pd.DateOffset(years=forecast_period)
         actual_values = data.loc[date_from_ts:date_from_ts + pd.DateOffset(hours=forecast_period)]
     forecast_period+=1
+    print("Actual Values:",actual_values)
     print("Forecast Period:", forecast_period)
 
     # Create a dataframe for the forecast period
@@ -315,29 +324,31 @@ def generate_sarimax_forecast(data, date_from, date_to, frequency, period):
     # Fit SARIMAX model to the filtered data
     order = (1, 1, 1)  # Example order, you can optimize this based on your data
     seasonal_order = (1, 1, 1, 12)  # Example seasonal order (s=12 for monthly data), adjust as needed
-    model = SARIMAX(training_data, order=order, seasonal_order=seasonal_order, enforce_stationarity=False, enforce_invertibility=False)
+    model = SARIMAX(training_data[:-1], order=order, seasonal_order=seasonal_order, enforce_stationarity=False, enforce_invertibility=False)
     model_fit = model.fit(disp=False)
     
     # Calculate forecast period based on frequency
     if frequency == 'H':
-        forecast_period = (date_to_ts - date_from_ts).total_seconds() / 3600 + period -1# Difference in hours
+        forecast_period = (date_to_ts - date_from_ts).total_seconds() / 3600 + period# Difference in hours
         actual_values = data.loc[date_from_ts:date_from_ts + pd.DateOffset(hours=forecast_period)]
     elif frequency == 'D':
-        forecast_period = (date_to_ts - date_from_ts).days + period -1 # Difference in days
+        forecast_period = (date_to_ts - date_from_ts).days + period# Difference in days
         actual_values = data.loc[date_from_ts:date_from_ts + pd.DateOffset(days=forecast_period)]
     elif frequency == 'W':
-        forecast_period = ((date_to_ts - date_from_ts).days + 1) // 7 + period -1 # Difference in weeks
+        forecast_period = ((date_to_ts - date_from_ts).days + 1) // 7 + period# Difference in weeks
         actual_values = data.loc[date_from_ts:date_from_ts + pd.DateOffset(weeks=forecast_period)]
     elif frequency == 'M':
-        forecast_period = (date_to_ts.year - date_from_ts.year) * 12 + date_to_ts.month - date_from_ts.month + period -1# Difference in months
+        forecast_period = (date_to_ts.year - date_from_ts.year) * 12 + date_to_ts.month - date_from_ts.month + period# Difference in months
         actual_values = data.loc[date_from_ts:date_from_ts + pd.DateOffset(months=forecast_period)]
     elif frequency == 'Y':
-        forecast_period = date_to_ts.year - date_from_ts.year + period -1 # Difference in years
+        forecast_period = date_to_ts.year - date_from_ts.year + period# Difference in years
         actual_values = data.loc[date_from_ts:date_from_ts + pd.DateOffset(years=forecast_period)]
+    forecast_period+=1
+    print("Actual Values:",actual_values)
     print("Forecast Period:", forecast_period)
     
     # Make predictions for the specified period
-    forecast = model_fit.get_forecast(steps=int(forecast_period)+1)
+    forecast = model_fit.get_forecast(steps=int(forecast_period))
     print("Forecast\n", forecast.predicted_mean)
     
     # Calculate MAPE
@@ -356,7 +367,7 @@ def generate_stl_forecast(data, date_from, date_to, frequency, period):
     print('Date From',date_from_ts)
     print('Date To',date_to_ts)
     print("Data",data)
-    training_data = data[:date_from_ts]
+    training_data = data[:date_from_ts][:-1]
     print("Triaining Data",training_data)
     # Perform STL decomposition on the filtered data
     decomposition_result = seasonal_decompose(training_data, model='additive', period=3)  # Example period, adjust as needed
@@ -368,26 +379,42 @@ def generate_stl_forecast(data, date_from, date_to, frequency, period):
     
     # Calculate forecast period based on frequency
     if frequency == 'H':
-        forecast_period = (date_to_ts - date_from_ts).total_seconds() / 3600 + period -1 # Difference in hours
+        forecast_period = (date_to_ts - date_from_ts).total_seconds() / 3600 + period# Difference in hours
         actual_values = data.loc[date_from_ts:date_from_ts + pd.DateOffset(hours=forecast_period)]
     elif frequency == 'D':
         forecast_period = (date_to_ts - date_from_ts).days + period -1 # Difference in days
         actual_values = data.loc[date_from_ts:date_from_ts + pd.DateOffset(days=forecast_period)]
     elif frequency == 'W':
-        forecast_period = ((date_to_ts - date_from_ts).days + 1) // 7 + period -1 # Difference in weeks
+        forecast_period = ((date_to_ts - date_from_ts).days + 1) // 7 + period# Difference in weeks
         actual_values = data.loc[date_from_ts:date_from_ts + pd.DateOffset(weeks=forecast_period)]
     elif frequency == 'M':
-        forecast_period = (date_to_ts.year - date_from_ts.year) * 12 + date_to_ts.month - date_from_ts.month + period -1# Difference in months
+        forecast_period = (date_to_ts.year - date_from_ts.year) * 12 + date_to_ts.month - date_from_ts.month + period# Difference in months
         actual_values = data.loc[date_from_ts:date_from_ts + pd.DateOffset(months=forecast_period)]
     elif frequency == 'Y':
-        forecast_period = date_to_ts.year - date_from_ts.year + period -1 # Difference in years
+        forecast_period = date_to_ts.year - date_from_ts.year + period# Difference in years
         actual_values = data.loc[date_from_ts:date_from_ts + pd.DateOffset(years=forecast_period)]
+    forecast_period+=1
+    print("Actual Values:",actual_values)
     print("Forecast Period:", forecast_period)
-    
-    # Make predictions for the specified period using the trend and seasonal components
-    forecast = pd.concat([trend, seasonal]).iloc[:int(forecast_period)+1]
-    print("Forecast\n", forecast)
-    
+
+    future_time_steps = pd.date_range(start=date_from_ts, periods=forecast_period, freq=frequency)
+    print("Future Time Steps",len(future_time_steps))
+
+    # Generate future trend component (assuming a constant trend)
+    future_trend = trend.iloc[-1] + np.arange(1, forecast_period + 1) * (trend.iloc[-1] - trend.iloc[-2])
+    print("Future Trend",len(future_trend))
+
+    # Generate future seasonal component (assuming a constant seasonal pattern)
+    future_trend_values = trend.iloc[-1] + np.arange(1, forecast_period + 1) * (trend.iloc[-1] - trend.iloc[-2])
+    future_trend = pd.Series(future_trend_values, index=future_time_steps)
+
+    # Generate future seasonal component (extrapolate the seasonal pattern)
+    future_seasonal_values = seasonal.iloc[-len(seasonal):].values  # Take the last observed seasonal pattern
+    future_seasonal = pd.Series(np.tile(future_seasonal_values, forecast_period // len(seasonal) + 1)[:forecast_period], index=future_time_steps)
+
+    # Combine future trend and seasonal components for forecasting
+    forecast = future_trend + future_seasonal
+        
     # Calculate MAPE
       # Actual values for the specified date range
     result_json = create_result_json(forecast, actual_values)

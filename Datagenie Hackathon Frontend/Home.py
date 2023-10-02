@@ -10,6 +10,7 @@ import requests
 import pytz
 
 
+
 # Config
 error_message=""
 st.set_page_config(page_title='Auto Forecastor',
@@ -36,7 +37,6 @@ def button_onlick(date_from,date_to,ts_col,val_col,frequency,period,df):
         return error_message
     if len(df)<3:
         error_message="The time series data is too small to forecast add other data"
-        print(error_message)
         return error_message 
     if date_from>=date_to:
         error_message="The end date cannot be greater than start date"
@@ -49,15 +49,12 @@ def button_onlick(date_from,date_to,ts_col,val_col,frequency,period,df):
         return error_message
     if ts_col==val_col:
         error_message="Both Date Column and Value column are same"
-        print(error_message)
         return error_message
     return 'Y'
 
 def make_request(df,date_from,date_to,ts_col,val_col,freq):
     median = df[val_col].median()
     df[val_col].fillna(median,inplace=True)
-    print("Date From", date_from)
-    print("Date To", date_to)
     date_from = date_from.replace(" ", "%20")
     date_to = date_to.replace(" ", "%20")
     df.columns = ['Date','Value']
@@ -67,13 +64,9 @@ def make_request(df,date_from,date_to,ts_col,val_col,freq):
     mapper = {"Daily":'D',"Hourly":"H","Weekly":"W","Monthly":"M"}
     freq = mapper[freq]
     json_string = json.dumps(formatted_data)
-    request_url = f"http://ec2-13-233-69-101.ap-south-1.compute.amazonaws.com:80/predict?date_from={date_from}&date_to={date_to}&period={period}&frequency={freq}"
-    print("request url:",request_url)
+    request_url = f"http://localhost:80/predict?date_from={date_from}&date_to={date_to}&period={period}&frequency={freq}"
     result = requests.post(request_url,data=json_string)
-    print(result)
     result = result.json()
-    st.json(result)
-    print(result)
     return result
     
 
@@ -84,11 +77,8 @@ with open('style.css')as f:
 st.subheader("Get your best time series forecast results in just a button click")
 uploaded_file = st.file_uploader("Upload a CSV file", type=["csv"])
 if uploaded_file is not None:
-    # Read the uploaded CSV file into a Pandas DataFrame
     df = pd.read_csv(uploaded_file,index_col=0)
     df_data = df.copy()
-    # Process the DataFrame as needed
-    # For example, display the DataFrame
     date_from = ""
     date_to = ""
     ts_col = ""
@@ -139,35 +129,56 @@ if uploaded_file is not None:
         st.markdown("<hr>",unsafe_allow_html=True)
         sub_col4_1, sub_col4_2, sub_col4_3 = st.columns([5,4,2])
         with sub_col4_2:
+            st.write("")
+            st.write("")
+            st.write("")
+            st.write("")
             if st.button("Start Forecast",type="primary"):
                check = button_onlick(date_from,date_to,ts_col,val_col,freq,period,df.copy())
-               print(check)
                if check == 'Y':
                     response  = make_request(df,date_from,date_to,ts_col,val_col,freq)
                     df_data = df_data.set_index('point_timestamp')
                     forecast = pd.DataFrame(response['result'])
+                    forecast_result = forecast.copy()
                     forecast.set_index('point_timestamp',inplace=True)
                     forecast = forecast['yhat']
                else:
                     st.markdown(f"<p style='color: red'>{check}</p>",unsafe_allow_html=True)
     if response:
+        st.markdown("<hr><h2 style='text-align: center;font-size:50px'>FORECAST RESULTS</h2>",
+            unsafe_allow_html=True)
+        st.write("")
+        st.write("")
+        st.write("")
+        col1,col2=st.columns([4,6])
+        with col2:
+            st.table(forecast_result[['point_timestamp','point_value','yhat']])
+        with col1:
+            subcol1, subcol2 = st.columns(2)
+            with subcol1:
+                st.metric("MAPE",round(response['mape'],3),0)
+            with subcol2:
+                st.metric("Model Used",response['model'])
+
         fig = plot_utils.plot_forecasted(df_data,
                                             forecast)
         st.plotly_chart(fig, use_container_width=True)
 
     st.markdown("<hr>",unsafe_allow_html=True)
+    st.markdown("<h2 style='text-align: center;font-size:50px'>GRAPHS AND CHARTS</h2>",
+            unsafe_allow_html=True)
     st.subheader("Some interesting charts that you would love to see...\n\n\n")
     st.write("")
     st.write("")
     st.write("Use the slider below to select the date range you want to analyze")
     st.write("")
-    print("dF DATA",df_data)
     df_data = df_data.reset_index()
     start_date, end_date = st.select_slider('Pick Month Range', options=(df_data[ts_col]), value=(df_data[ts_col].iloc[0], df_data[ts_col].iloc[-1]))
+    st.markdown("<hr>",unsafe_allow_html=True)
     ts_filtered = df_data[(df_data[ts_col] >=
                         start_date) & (df_data[ts_col] <= end_date)]
-    print(ts_filtered)
     st.write("")
+    st.subheader("Time Series Data Stats")
     col1,col2,col3 = st.columns(3)
     with col1:
         st.metric("Total Number of Data Points",len(ts_filtered),0)
@@ -176,10 +187,27 @@ if uploaded_file is not None:
     with col3:
         st.metric("Frequency",freq)
 
+    st.subheader("Time Series Plot")
     fig1 = plot_utils.linechart_with_range_slider(ts_filtered[ts_col],
                                             ts_filtered[val_col], 'Value', 'Time Series data with Rangeslider for {}'.format(val_col))
     st.plotly_chart(fig1, use_container_width=True)
-    
+    st.markdown("<hr>",unsafe_allow_html=True)
+    st.subheader("ACF and PACF Plots")
+    col1,col2 = st.columns(2)
+    with col1:
+        fig2 = plot_utils.pacf_plot(ts_filtered[val_col])
+        st.pyplot(fig2)
+    with col2:
+        fig3 = plot_utils.pacf_plot(ts_filtered[val_col])
+        st.pyplot(fig3)
+
     ts_val = pd.to_datetime(ts_filtered[ts_col])
     ts_data = pd.DataFrame(ts_filtered[val_col]).set_index(ts_val)
+
+    st.subheader("Trend and Seasonality Plots")
+    fig4 = plot_utils.trend_seasonality_plot(ts_filtered[ts_col],
+                                            ts_filtered[val_col])
+    st.plotly_chart(fig4, use_container_width=True)
+
+ 
     

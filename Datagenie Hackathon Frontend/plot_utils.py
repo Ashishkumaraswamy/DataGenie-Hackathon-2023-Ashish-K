@@ -5,6 +5,8 @@ import json
 import numpy as np
 import pandas as pd
 from pandas import json_normalize
+from statsmodels.graphics.tsaplots import plot_pacf,plot_acf
+import matplotlib.pyplot as plt
 
 def gauge_chart(value):
     fig = go.Figure(go.Indicator(
@@ -116,4 +118,29 @@ def plot_forecasted(ts_data,forecast_values):
                     yaxis_title='Value',
                     legend=dict(x=0, y=1, traceorder='normal'))
     
+    return fig
+
+def pacf_plot(data):
+    fig, ax = plt.subplots(figsize=(7, 7))  # Set the width and height according to your preference
+    plot_pacf(data, ax=ax)
+    return fig
+
+def acf_plot(data):
+    fig, ax = plt.subplots(figsize=(7, 7))  # Set the width and height according to your preference
+    plot_acf(data, ax=ax)
+    return fig
+
+def trend_seasonality_plot(dates,values):
+    window = 7 if len(values)>7 else len(values)-1
+    trend = values.rolling(window=window, min_periods=1, center=True).mean()
+
+    # Calculate seasonality by subtracting the trend from the original values
+    seasonal = values - trend
+
+    # Create a Plotly figure to visualize trend and seasonality
+    fig = go.Figure()
+
+    fig.add_trace(go.Scatter(x=dates, y=trend, mode='lines', name='Trend'))
+    fig.add_trace(go.Scatter(x=dates, y=seasonal, mode='lines', name='Seasonal Component'))
+    fig.update_layout(title='Trend and Seasonality', xaxis_title='Date', yaxis_title='Value')
     return fig
