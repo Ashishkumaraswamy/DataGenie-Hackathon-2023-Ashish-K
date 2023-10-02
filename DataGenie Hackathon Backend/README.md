@@ -38,7 +38,7 @@ flask run
 
 ## Sample request to our flask application
 
-![Screen Recording - 3 March 2023 (1)](https://user-images.githubusercontent.com/62760269/222525992-b5b129df-dcb3-4315-b7b7-17ef88bdb451.gif)
+![Screen Recording - Oct 2, 2023](https://github.com/Ashishkumaraswamy/DataGenie-Hackathon-2023-Ashish-K/assets/64360092/a49d70c4-4305-46ff-9f9d-6606530f39a5)
 
 
 
