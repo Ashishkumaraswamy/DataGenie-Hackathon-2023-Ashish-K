@@ -67,7 +67,7 @@ def make_request(df,date_from,date_to,ts_col,val_col,freq):
     mapper = {"Daily":'D',"Hourly":"H","Weekly":"W","Monthly":"M"}
     freq = mapper[freq]
     json_string = json.dumps(formatted_data)
-    request_url = f"http://localhost:80/predict?date_from={date_from}&date_to={date_to}&period={period}&frequency={freq}"
+    request_url = f"http://ec2-13-233-69-101.ap-south-1.compute.amazonaws.com:80/predict?date_from={date_from}&date_to={date_to}&period={period}&frequency={freq}"
     print("request url:",request_url)
     result = requests.post(request_url,data=json_string)
     print(result)
