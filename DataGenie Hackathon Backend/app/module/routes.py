@@ -8,6 +8,8 @@ from .schema import *
 from .models import *
 from datetime import datetime
 from dateutil import parser
+import os
+import lightgbm
 
 @app.get("/")
 def home():
@@ -35,7 +37,9 @@ async def process_data(data: TimeSeriesData, date_from: str,date_to: str="",peri
     time_series_data = data.data
     if model == "":
         mapper = {0:'ARIMA',1:"ETS",2:"GARCH",3:"LSTM",4:"PROPHET",5:"SARIMAX",6:"STL"}
+        print(os.listdir('app'))
         loaded_model = joblib.load('lgbm_model.pkl')
+        print("Model Succesfully loaded")
         feature_data = feature_extraction(data)
         print(feature_data)
         feature_data = np.array(feature_data)
