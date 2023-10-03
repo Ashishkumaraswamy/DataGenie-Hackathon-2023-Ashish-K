@@ -59,16 +59,6 @@ class FeatureExtractionTransformer(BaseEstimator, TransformerMixin):
         polyreg.fit(x, X['Value'])
         # Coefficients of the polynomial (including higher-order terms)
         poly_coefficients = polyreg.named_steps['linearregression'].coef_
-        # print(poly_coefficients)
-        # algo = rpt.Pelt(model="rbf").fit(X['Value'])
-        # result = algo.predict(pen=10)
-        # print("result",result)
-
-        # num_acf_peaks = len([1 for val in acf_values[1:] if abs(val) > 0.025])
-        # dominant_frequency_acf_index = acf_values[1:].argmax() + 1
-        # dominant_frequency_acf = acf_values[dominant_frequency_acf_index]
-        # strength_of_seasonality_acf = dominant_frequency_acf
-        # has_multiple_seasonal_patterns = num_acf_peaks > 1
 
         # Calculate percentiles (e.g., 25th, 75th percentiles)
         percentiles = np.percentile(X['Value'], [25, 75])
@@ -141,12 +131,6 @@ class FeatureExtractionTransformer(BaseEstimator, TransformerMixin):
             'Std Dev': std_dev,
             'Skewness': skewness,
             'Kurtosis': kurt,
-            # 'ACF_values' : acf_values,
-            # 'PACF_values' : pacf_values,
-            # 'Num ACF Peaks': num_acf_peaks,
-            # 'Dominant Frequency ACF': dominant_frequency_acf,
-            # 'Strength of seasonality ACF':strength_of_seasonality_acf,
-            # 'Multiple Seasonal Patterns':has_multiple_seasonal_patterns,
             'Linear Regression Slope': slope,
             '25th Percentile': percentiles[0],
             '75th Percentile': percentiles[1],

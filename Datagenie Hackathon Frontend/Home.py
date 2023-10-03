@@ -64,7 +64,7 @@ def make_request(df,date_from,date_to,ts_col,val_col,freq):
     mapper = {"Daily":'D',"Hourly":"H","Weekly":"W","Monthly":"M"}
     freq = mapper[freq]
     json_string = json.dumps(formatted_data)
-    request_url = f"http://localhost:80/predict?date_from={date_from}&date_to={date_to}&period={period}&frequency={freq}"
+    request_url = f"http://ec2-65-2-179-122.ap-south-1.compute.amazonaws.com:80/predict?date_from={date_from}&date_to={date_to}&period={period}&frequency={freq}"
     result = requests.post(request_url,data=json_string)
     result = result.json()
     return result
@@ -195,7 +195,7 @@ if uploaded_file is not None:
     st.subheader("ACF and PACF Plots")
     col1,col2 = st.columns(2)
     with col1:
-        fig2 = plot_utils.pacf_plot(ts_filtered[val_col])
+        fig2 = plot_utils.acf_plot(ts_filtered[val_col])
         st.pyplot(fig2)
     with col2:
         fig3 = plot_utils.pacf_plot(ts_filtered[val_col])

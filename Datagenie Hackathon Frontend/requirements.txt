@@ -1,0 +1,6 @@
+streamlit
+pandas
+statsmodels
+pytz
+plotly
+matplotlib

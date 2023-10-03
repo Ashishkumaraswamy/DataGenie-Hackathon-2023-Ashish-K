@@ -4,7 +4,6 @@ from statsmodels.tsa.arima.model import ARIMA
 from statsmodels.tsa.holtwinters import ExponentialSmoothing
 from arch import arch_model
 from statsmodels.tsa.statespace.sarimax import SARIMAX
-# from tbats import TBATS
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import LSTM, Dense
 from sklearn.preprocessing import MinMaxScaler
@@ -21,14 +20,11 @@ def generate_arima_forecast(data, date_from, date_to, frequency, period):
     date_to_ts = datetime.strptime(date_to, "%Y-%m-%d %H:%M:%S")
     date_from_ts = pd.Timestamp(date_from_ts)
     date_to_ts = pd.Timestamp(date_to_ts)
-    print('Date From',date_from_ts)
-    print('Date To',date_to_ts)
-    print("Data",data)
+
     training_data = data[:date_from_ts]
-    print("Triaining Data",training_data)
-    print("Frequency:",frequency)
+
     # Fit ARIMA model to the filtered data
-    order = (2, 2, 2)  # Example order, you can optimize this based on your data
+    order = (2, 2, 2) 
     model = ARIMA(training_data.iloc[:-1], order=order)
     model_fit = model.fit()
     
@@ -49,11 +45,10 @@ def generate_arima_forecast(data, date_from, date_to, frequency, period):
         forecast_period = date_to_ts.year - date_from_ts.year + period# Difference in years
         actual_values = data.loc[date_from_ts:date_from_ts + pd.DateOffset(years=forecast_period)]
     forecast_period+=1
-    print("Actual Values:",actual_values)
-    print("Forecast Period:", forecast_period)
+
     # Make predictions for the specified period
     forecast = model_fit.forecast(steps=int(forecast_period))
-    print("Forecast\n",forecast)
+
     # Calculate MAPE
 
     result_json = create_result_json(forecast,actual_values)
@@ -67,15 +62,12 @@ def generate_ets_forecast(data, date_from, date_to, frequency, period):
     date_to_ts = datetime.strptime(date_to, "%Y-%m-%d %H:%M:%S")
     date_from_ts = pd.Timestamp(date_from_ts)
     date_to_ts = pd.Timestamp(date_to_ts)
-    print('Date From',date_from_ts)
-    print('Date To',date_to_ts)
-    print("Data",data)
+
     training_data = data[:date_from_ts]
-    print("Triaining Data",training_data)
-    print("Frequency:", frequency)
+
     
     # Fit ETS model to the filtered data
-    model = ExponentialSmoothing(training_data[:-1], trend="add", seasonal="add", seasonal_periods=12)  # Example configuration, adjust as needed
+    model = ExponentialSmoothing(training_data[:-1], trend="add", seasonal="add", seasonal_periods=12) 
     model_fit = model.fit()
     
     # Calculate forecast period based on frequency
@@ -95,8 +87,6 @@ def generate_ets_forecast(data, date_from, date_to, frequency, period):
         forecast_period = date_to_ts.year - date_from_ts.year + period # Difference in years
         actual_values = data.loc[date_from_ts:date_from_ts + pd.DateOffset(years=forecast_period)]
     forecast_period+=1
-    print("Actual Values:",actual_values)
-    print("Forecast Period:", forecast_period)
     
     # Make predictions for the specified period
     forecast = model_fit.forecast(steps=int(forecast_period))
@@ -114,14 +104,11 @@ def generate_garch_forecast(data, date_from, date_to, frequency, period):
     date_to_ts = datetime.strptime(date_to, "%Y-%m-%d %H:%M:%S")
     date_from_ts = pd.Timestamp(date_from_ts)
     date_to_ts = pd.Timestamp(date_to_ts)
-    print('Date From',date_from_ts)
-    print('Date To',date_to_ts)
-    print("Data",data)
+
     training_data = data[:date_from_ts]
-    print("Frequency:", frequency)
     
     # Fit GARCH model to the filtered data
-    model = arch_model(training_data[:-1], vol='Garch', p=1, q=1)  # Example configuration, adjust p and q based on your data
+    model = arch_model(training_data[:-1], vol='Garch', p=1, q=1)
     model_fit = model.fit(disp='off')
     
     # Calculate forecast period based on frequency
@@ -141,8 +128,6 @@ def generate_garch_forecast(data, date_from, date_to, frequency, period):
         forecast_period = date_to_ts.year - date_from_ts.year + period# Difference in years
         actual_values = data.loc[date_from_ts:date_from_ts + pd.DateOffset(years=forecast_period)]
     forecast_period+=1
-    print("Actual Values:",actual_values)
-    print("Forecast Period:", forecast_period)
     
     # Make predictions for the specified period
     last_volatility = model_fit.conditional_volatility.iloc[-1]
@@ -166,11 +151,8 @@ def generate_lstm_forecast(data, date_from, date_to, frequency, period):
     date_to_ts = datetime.strptime(date_to, "%Y-%m-%d %H:%M:%S")
     date_from_ts = pd.Timestamp(date_from_ts)
     date_to_ts = pd.Timestamp(date_to_ts)
-    print('Date From',date_from_ts)
-    print('Date To',date_to_ts)
-    print("Data",data)
+
     training_data = data[:date_from_ts]
-    print("Triaining Data",training_data)
     
     # Normalize the data
     scaler = MinMaxScaler(feature_range=(0, 1))
@@ -218,8 +200,6 @@ def generate_lstm_forecast(data, date_from, date_to, frequency, period):
         forecast_period = date_to_ts.year - date_from_ts.year + period# Difference in years
         actual_values = data.loc[date_from_ts:date_from_ts + pd.DateOffset(years=forecast_period)]
     forecast_period+=1
-    print("Actual Values:",actual_values)
-    print("Forecast Period:", forecast_period)
    
     # Make predictions for the specified period
     forecast = []
@@ -234,13 +214,10 @@ def generate_lstm_forecast(data, date_from, date_to, frequency, period):
     forecast_index = pd.date_range(start=date_from_ts, periods=int(forecast_period), freq=frequency)
     forecast = pd.Series(data=forecast.flatten(),index=forecast_index)
     forecast = forecast.astype('float')
-    print(forecast)
+
     # Calculate MAPE
-    print("Shape:",len(forecast),len(actual_values))
     result_json = create_result_json(forecast, actual_values)
-    print("Created Json")
     mape = mean_absolute_percentage_error(actual_values, forecast)
-    print()
     return result_json, mape
 
 def generate_prophet_forecast(data, date_from, date_to, frequency, period):
@@ -248,11 +225,8 @@ def generate_prophet_forecast(data, date_from, date_to, frequency, period):
     date_to_ts = datetime.strptime(date_to, "%Y-%m-%d %H:%M:%S")
     date_from_ts = pd.Timestamp(date_from_ts)
     date_to_ts = pd.Timestamp(date_to_ts)
-    print('Date From',date_from_ts)
-    print('Date To',date_to_ts)
-    print("Data",data)
+
     training_data = data[:date_from_ts][:-1]
-    print("Triaining Data",training_data)
     
     # Prepare the data for Prophet model
     df = pd.DataFrame({
@@ -285,12 +259,9 @@ def generate_prophet_forecast(data, date_from, date_to, frequency, period):
         date_offset = pd.DateOffset(years=forecast_period)
         actual_values = data.loc[date_from_ts:date_from_ts + pd.DateOffset(hours=forecast_period)]
     forecast_period+=1
-    print("Actual Values:",actual_values)
-    print("Forecast Period:", forecast_period)
 
     # Create a dataframe for the forecast period
     future = model.make_future_dataframe(periods=int(forecast_period), freq=frequency)  # Use 'D' for daily frequency, adjust as needed
-    print(future)
     # Generate forecasts for the specified period
     forecast = model.predict(future)
     
@@ -299,13 +270,10 @@ def generate_prophet_forecast(data, date_from, date_to, frequency, period):
     forecast = forecast.set_index('ds')
 
     forecast = forecast['yhat'][date_from_ts:date_from_ts + date_offset]
-    print('Forecast',forecast)
-    print('Actual',actual_values)
 
     # Calculate MAPE
-    print("Shape:",len(forecast),len(actual_values))
+
     result_json = create_result_json(forecast, actual_values)
-    print("Created Json")
     mape = mean_absolute_percentage_error(actual_values, forecast)
     
     return result_json, mape
@@ -315,11 +283,8 @@ def generate_sarimax_forecast(data, date_from, date_to, frequency, period):
     date_to_ts = datetime.strptime(date_to, "%Y-%m-%d %H:%M:%S")
     date_from_ts = pd.Timestamp(date_from_ts)
     date_to_ts = pd.Timestamp(date_to_ts)
-    print('Date From',date_from_ts)
-    print('Date To',date_to_ts)
-    print("Data",data)
+
     training_data = data[:date_from_ts]
-    print("Triaining Data",training_data)
     
     # Fit SARIMAX model to the filtered data
     order = (1, 1, 1)  # Example order, you can optimize this based on your data
@@ -344,12 +309,9 @@ def generate_sarimax_forecast(data, date_from, date_to, frequency, period):
         forecast_period = date_to_ts.year - date_from_ts.year + period# Difference in years
         actual_values = data.loc[date_from_ts:date_from_ts + pd.DateOffset(years=forecast_period)]
     forecast_period+=1
-    print("Actual Values:",actual_values)
-    print("Forecast Period:", forecast_period)
     
     # Make predictions for the specified period
     forecast = model_fit.get_forecast(steps=int(forecast_period))
-    print("Forecast\n", forecast.predicted_mean)
     
     # Calculate MAPE
     result_json = create_result_json(forecast.predicted_mean, actual_values)
@@ -364,11 +326,9 @@ def generate_stl_forecast(data, date_from, date_to, frequency, period):
     date_to_ts = datetime.strptime(date_to, "%Y-%m-%d %H:%M:%S")
     date_from_ts = pd.Timestamp(date_from_ts)
     date_to_ts = pd.Timestamp(date_to_ts)
-    print('Date From',date_from_ts)
-    print('Date To',date_to_ts)
-    print("Data",data)
+
     training_data = data[:date_from_ts][:-1]
-    print("Triaining Data",training_data)
+
     # Perform STL decomposition on the filtered data
     decomposition_result = seasonal_decompose(training_data, model='additive', period=3)  # Example period, adjust as needed
     
@@ -394,15 +354,11 @@ def generate_stl_forecast(data, date_from, date_to, frequency, period):
         forecast_period = date_to_ts.year - date_from_ts.year + period# Difference in years
         actual_values = data.loc[date_from_ts:date_from_ts + pd.DateOffset(years=forecast_period)]
     forecast_period+=1
-    print("Actual Values:",actual_values)
-    print("Forecast Period:", forecast_period)
 
     future_time_steps = pd.date_range(start=date_from_ts, periods=forecast_period, freq=frequency)
-    print("Future Time Steps",len(future_time_steps))
 
     # Generate future trend component (assuming a constant trend)
     future_trend = trend.iloc[-1] + np.arange(1, forecast_period + 1) * (trend.iloc[-1] - trend.iloc[-2])
-    print("Future Trend",len(future_trend))
 
     # Generate future seasonal component (assuming a constant seasonal pattern)
     future_trend_values = trend.iloc[-1] + np.arange(1, forecast_period + 1) * (trend.iloc[-1] - trend.iloc[-2])
@@ -416,7 +372,6 @@ def generate_stl_forecast(data, date_from, date_to, frequency, period):
     forecast = future_trend + future_seasonal
         
     # Calculate MAPE
-      # Actual values for the specified date range
     result_json = create_result_json(forecast, actual_values)
     mape = mean_absolute_percentage_error(actual_values, forecast)
     
