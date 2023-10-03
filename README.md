@@ -17,7 +17,7 @@
 <hr>
 </div>
 
-**Website Link**: [AQI Heatwave Forecaster Application](https://nasscom-capgemini-hackathon-aqi-heatwave-forecaster-home-o0tty0.streamlit.app/)
+**Website Link**: [DataGenie Application](https://datagenie-frontend.streamlit.app/)
 
 ![image](https://github.com/Ashishkumaraswamy/DataGenie-Hackathon-2023-Ashish-K/assets/64360092/53dc1611-e1ac-46df-b361-7e9a2f536454)
 
