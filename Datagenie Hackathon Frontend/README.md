@@ -14,7 +14,7 @@ Frotend Application  bulit for DataGenie Hackathon 2023 providing a frontend for
 
 ## Website Link
 
-https://nasscom-capgemini-hackathon-aqi-heatwave-forecaster-home-o0tty0.streamlit.app/Live_Dashboard
+https://datagenie-frontend.streamlit.app/
 
 ## Setting Up Application
 
